@@ -1,5 +1,21 @@
 # Floating Object Fixer — Changelog
 
+## v2.0.1 — 2026-09-14
+
+**Fixed a crash reported by real users**: running detection/fix with Python
+installed but PyNifly not (fully) set up — i.e. step 1 of the optional
+collision-awareness setup done, steps 2–3 skipped or wrong — crashed the
+whole run with `IOException: The pipe is being closed`, instead of degrading
+to heightmap-only like the README promises. Root cause: the bundled
+`extract_collision.py` fails to import PyNifly and exits immediately, before
+reading any of the NIF paths piped to its stdin; the .NET side was writing
+that input in an unguarded loop, so the moment the child process exited, the
+next write threw and crashed the whole detection/fix run instead of falling
+back. Now caught and handled the same way every other "collision-awareness
+unavailable" case already was — the log names the likely cause and includes
+the actual Python error, and results fall back to heightmap-only for that
+run, exactly as v2.0.0 already did for "no Python installed at all."
+
 ## v2.0.0 — 2026-09-14
 
 A large feature update built over several days of live testing against a real,

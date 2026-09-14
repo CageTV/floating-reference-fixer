@@ -165,8 +165,34 @@ public static class CollisionRaycaster
             return result;
         }
 
-        foreach (var p in uniquePaths) proc.StandardInput.WriteLine(p);
-        proc.StandardInput.Close();
+        // FIXED 2026-09-14, after a real user bug report: if the python process
+        // exits before we finish writing its input - the common case being
+        // `extract_collision.py`'s top-level `from pyn.pynifly import NifFile`
+        // throwing because PyNifly isn't set up (Python itself installed per
+        // README step 1, but steps 2-3 - the NiflyDLL.dll placement + `pip
+        // install scipy` - skipped or wrong) - the OS closes the pipe from the
+        // child's side, and WriteLine throws IOException: "The pipe is being
+        // closed." That exception was previously unhandled here, so it crashed
+        // the ENTIRE detection/fix run instead of degrading - directly
+        // contradicting this tool's own README promise ("degrades gracefully...
+        // nothing breaks" if Python/PyNifly isn't set up). Catch it and fall
+        // back the same way every other collision-awareness-unavailable path in
+        // this method already does.
+        try
+        {
+            foreach (var p in uniquePaths) proc.StandardInput.WriteLine(p);
+            proc.StandardInput.Close();
+        }
+        catch (IOException ex)
+        {
+            var earlyStderr = proc.StandardError.ReadToEnd();
+            log($"  CollisionRaycaster: extract_collision.py exited before accepting all input ({ex.Message}). " +
+                "This usually means PyNifly isn't fully set up - see the README's collision-awareness section " +
+                "(NiflyDLL.dll under pynifly/io_scene_nifly/, plus 'pip install scipy'). " +
+                $"Python stderr: {earlyStderr.Trim()}. Skipping geometry checks; detection/fix results will use " +
+                "heightmap-only targets for every candidate, same as before collision-awareness existed.");
+            return result;
+        }
 
         var stdout = proc.StandardOutput.ReadToEnd();
         var stderr = proc.StandardError.ReadToEnd();

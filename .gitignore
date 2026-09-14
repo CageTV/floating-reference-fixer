@@ -16,3 +16,4 @@ For Distribution/
 *.png
 Thumbs.db
 Skyrim Landscape and Water Fixes/
+__pycache__/

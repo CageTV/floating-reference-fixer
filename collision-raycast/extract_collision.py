@@ -27,9 +27,10 @@ MOPP BVH acceleration structure itself is irrelevant to us - we brute-force
 every triangle), bhkCompressedMeshShape + bhkPackedNiTriStripsShape (leaf
 triangle mesh - the dominant case for real terrain-adjacent rocks/architecture,
 confirmed above), bhkBoxShape (leaf, 8 corners -> 12 tris), bhkConvexVerticesShape
-(leaf, scipy ConvexHull - flagged `approx: true` in output since a hull of the
-stored vertices is the best available without the shape's own stored face
-planes). bhkCapsuleShape/bhkSphereShape are DELIBERATELY SKIPPED (return no
+(leaf, plain brute-force convex hull - see `_convex_hull_triangles` - flagged
+`approx: true` in output since a hull of the stored vertices is the best
+available without the shape's own stored face planes). bhkCapsuleShape/
+bhkSphereShape are DELIBERATELY SKIPPED (return no
 triangles) - real ground-forming rock/architecture collision is essentially
 never a bare capsule or sphere in practice (those are used for e.g. tree
 trunks, small props), and approximating them wrong is worse than reporting
@@ -141,13 +142,65 @@ def _convex_hull_triangles(vertices):
     entry - only x,y,z used). No stored faces, so the hull is reconstructed -
     flagged approx=True by the caller since floating-point hull triangulation
     can pick a different-but-equivalent triangulation than the original tool,
-    though the SURFACE (which is all we raycast against) is the same."""
-    from scipy.spatial import ConvexHull
+    though the SURFACE (which is all we raycast against) is the same.
+
+    Deliberately dependency-free (previously used scipy.spatial.ConvexHull -
+    removed 2026-09-14 per real user feedback: requiring a separate `pip
+    install scipy` was exactly the kind of manual setup step this tool's own
+    README claimed was optional, and a user who skipped it silently lost
+    collision-awareness for every bhkConvexVerticesShape mesh with no error).
+    Plain brute-force face test instead: every point TRIPLE whose plane has
+    every OTHER point on one side is a hull face - O(n^3), which is fine at
+    the vertex counts real collision hulls actually have (tens, not
+    thousands - the SafetyCap below exists only to fail loud on a
+    pathological outlier rather than hang). Can emit more triangles than the
+    minimal triangulation on a perfectly flat/coplanar face (several triples
+    on the same plane each independently pass) - harmless for this
+    raycast-only use, and this shape type is already unconditionally flagged
+    approx=True by the caller regardless."""
     pts = [(v[0], v[1], v[2]) for v in vertices]
-    if len(pts) < 4:
+    n = len(pts)
+    if n < 4:
         return []
-    hull = ConvexHull(pts)
-    return [(pts[a], pts[b], pts[c]) for a, b, c in hull.simplices]
+    if n > 200:
+        return []  # pathological outlier - fail safe (empty, not approximate) rather than hang
+
+    eps = 1e-6
+
+    def sub(a, b):
+        return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
+    def cross(a, b):
+        return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
+
+    def dot(a, b):
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+    tris = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            for k in range(j + 1, n):
+                normal = cross(sub(pts[j], pts[i]), sub(pts[k], pts[i]))
+                if dot(normal, normal) < eps:
+                    continue  # degenerate (collinear) triple
+                pos = neg = False
+                for m in range(n):
+                    if m == i or m == j or m == k:
+                        continue
+                    d = dot(normal, sub(pts[m], pts[i]))
+                    if d > eps:
+                        pos = True
+                    elif d < -eps:
+                        neg = True
+                    if pos and neg:
+                        break
+                if pos and neg:
+                    continue  # points on both sides - not a supporting plane, not a hull face
+                # Orient outward: if every other point was on the "positive"
+                # side, the raw cross-product normal pointed INWARD - flip
+                # the winding so the triangle's implied normal faces out.
+                tris.append((pts[i], pts[k], pts[j]) if pos else (pts[i], pts[j], pts[k]))
+    return tris
 
 
 def _resolve_shape(shape, shape_types_out):

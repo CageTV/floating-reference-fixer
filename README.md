@@ -43,27 +43,30 @@ snaps the reference's `Position.Z` — **only** Z, never X/Y, rotation, or
 scale — onto whichever of the above answers is most trustworthy for that
 specific reference.
 
-### Real collision awareness (optional, recommended)
+### Real collision awareness (works out of the box)
 
 Havok collision data lives inside each mesh's own NIF file, not in Mutagen's
 data model, so reading it requires an external step: `collision-raycast/
-extract_collision.py` (bundled with this tool) shells out to a Python
-interpreter and uses [`pynifly`](https://github.com/BadDogSkyrim/PyNifly) (the
+extract_collision.py` shells out to a Python interpreter and uses a bundled,
+trimmed copy of [`pynifly`](https://github.com/BadDogSkyrim/PyNifly) (the
 same library behind Outfit Studio/BodySlide) to extract real collision
 triangles from nearby meshes, which this tool then raycasts against in C#.
 
-**This is entirely optional and degrades gracefully.** If Python or PyNifly
-isn't set up, the tool falls back to heightmap-only detection (its original
-v1.0 behavior) and says so in the log — nothing breaks, you just lose the
-extra accuracy. To enable it:
+**`pynifly/` (the DLL + its Python wrapper) ships with this tool** — see
+`pynifly/NOTICE.md` for why that's fine license-wise (PyNifly is GPL-3.0,
+this tool is MIT; it runs as its own separate process, never linked into the
+.NET binary, so the two coexist as "mere aggregation" under GPL's own FAQ).
+The one earlier scipy dependency (used only for one specific collision-shape
+type) has been removed entirely — the hull math is now plain, dependency-free
+Python. **The only thing you still need is Python itself**:
 
 1. Install Python 3.9+ (the `py` launcher from python.org's installer is
    detected automatically; a plain venv/virtualenv Python on PATH works too).
-2. Download the latest `io_scene_nifly.zip` from
-   [PyNifly's releases](https://github.com/BadDogSkyrim/PyNifly/releases) and
-   extract it so `NiflyDLL.dll` ends up at
-   `<this tool's folder>/pynifly/io_scene_nifly/NiflyDLL.dll`.
-3. `pip install scipy` (used for one specific collision-shape type).
+
+That's it — no manual PyNifly download, no `pip install`. If Python isn't
+found at all, the tool still degrades gracefully to heightmap-only detection
+(its original v1.0 behavior) and says so in the log rather than failing the
+whole run.
 
 BSA/BA2-packed meshes are supported too, not just loose files — the resolver
 checks loose files first (matching Skyrim's own load-order precedence), then
@@ -105,9 +108,9 @@ with an explicit warning before running:
 ## Requirements
 
 - Windows
-- To just **run** the pre-built release: nothing extra — it's published
-  self-contained (bundles its own .NET runtime). Collision-awareness needs
-  the separate Python/PyNifly setup above; everything else works out of the box.
+- To just **run** the pre-built release: nothing extra beyond Python 3.9+ for
+  collision-awareness (see above) — it's published self-contained (bundles
+  its own .NET runtime), and PyNifly ships with it.
 - To **build from source**: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## Building from source

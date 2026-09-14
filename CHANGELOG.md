@@ -1,5 +1,30 @@
 # Floating Object Fixer — Changelog
 
+## v2.0.2 — 2026-09-14
+
+**Collision-awareness now works out of the box — no manual setup at all.** Real user feedback after
+v2.0.1: even with Python installed, users still had to manually download PyNifly and run
+`pip install scipy` before collision-awareness would actually engage — exactly the two steps v2.0.1's
+own README called "optional setup." Fixed properly instead of just documenting it better:
+
+- **PyNifly now ships with the tool.** A trimmed copy (`NiflyDLL.dll` + its `pyn/` Python wrapper only
+  — about 6MB, not the full ~43MB Blender addon) is bundled directly in the release. PyNifly is
+  GPL-3.0; this tool is MIT — see `pynifly/NOTICE.md` for why that's fine (PyNifly runs as its own
+  separate process, invoked via `Process.Start` and JSON over stdin/stdout, never linked into the .NET
+  binary — "mere aggregation" under GPL's own FAQ). Full GPL-3.0 text travels alongside it in
+  `pynifly/LICENSE`.
+- **The SciPy dependency is gone entirely**, not just bundled — it was only used for one specific
+  collision-shape type (`bhkConvexVerticesShape`). Replaced with a small, dependency-free pure-Python
+  convex-hull implementation, verified against known shapes (cube, tetrahedron) and a real raycast
+  query before shipping.
+- **The only remaining requirement is Python itself** (3.9+) — no `pip install`, no manual downloads.
+  If Python isn't found at all, the tool still degrades gracefully to heightmap-only, same as before.
+
+Verified end-to-end against a real 1283-plugin profile with a completely fresh build (no external
+PyNifly/scipy present anywhere the tool would normally look) — collision-awareness engaged
+immediately: 4348 candidates checked against 1170 unique meshes, 519 targets refined, 773 correctly
+reclassified as not actually floating, clean completion.
+
 ## v2.0.1 — 2026-09-14
 
 **Fixed a crash reported by real users**: running detection/fix with Python

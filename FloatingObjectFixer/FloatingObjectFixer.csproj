@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SeamFinder.Core\SeamFinder.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Bundled alongside the exe so collision-awareness works standalone on
+       any machine this is downloaded to - CollisionRaycaster resolves this
+       relative to AppContext.BaseDirectory, never a hardcoded dev path. -->
+  <ItemGroup>
+    <Content Include="..\collision-raycast\extract_collision.py">
+      <Link>collision-raycast\extract_collision.py</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>2.0.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+  </PropertyGroup>
+
+</Project>

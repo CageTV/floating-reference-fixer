@@ -1,0 +1,259 @@
+<Window x:Class="FloatingObjectFixer.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FloatingObjectFixer.UI"
+        mc:Ignorable="d"
+        Title="Floating Object Fixer" Height="700" Width="820" MinHeight="560" MinWidth="700">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="Margin" Value="0,3,4,3"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="0,3,0,3"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,3,4,3"/>
+            <Setter Property="Padding" Value="4,3"/>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Margin" Value="0,0,20,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- 0: disclaimer -->
+            <RowDefinition Height="Auto"/>   <!-- 1: mode selector -->
+            <RowDefinition Height="Auto"/>   <!-- 2: mode-specific panel -->
+            <RowDefinition Height="Auto"/>   <!-- 3: output section -->
+            <RowDefinition Height="Auto"/>   <!-- 4: run row -->
+            <RowDefinition Height="*"/>      <!-- 5: log -->
+            <RowDefinition Height="Auto"/>   <!-- 6: result bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Standing disclaimer, added 2026-09-14 at the user's own request, matching the
+             sibling tools' honest-limitations framing -->
+        <Border Grid.Row="0" Background="#FF1E1E1E" BorderBrush="#FF3F3F3F" BorderThickness="1" Padding="8" Margin="0,0,0,10">
+            <TextBlock Foreground="#FFDCDCDC" TextWrapping="Wrap" Margin="0">
+                This tool gets you MOST of the way there, not 100%. It has no true 3D collision awareness for
+                objects it can't find real nearby geometry for, and correcting some genuinely-floating references
+                safely just isn't possible without a fix that risks embedding a DIFFERENT, legitimately-placed
+                object underground - including one you specifically want kept where it is. Review the CSV report
+                and the log before trusting a fix broadly, and treat "Force-correct" and the custom safety
+                threshold below as deliberate, reviewed trade-offs, not a one-click cure-all.
+            </TextBlock>
+        </Border>
+
+        <!-- Mode selector -->
+        <GroupBox Grid.Row="1" Header="Mod manager" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" Margin="6">
+                <RadioButton x:Name="ModeMo2" Content="Mod Organizer 2" GroupName="Mode" IsChecked="True" Checked="Mode_Checked"/>
+                <RadioButton x:Name="ModeVortex" Content="Vortex" GroupName="Mode" Checked="Mode_Checked"/>
+                <RadioButton x:Name="ModeDirect" Content="Direct game path (no mod manager)" GroupName="Mode" Checked="Mode_Checked"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Mode-specific panels -->
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <!-- MO2 panel -->
+            <GroupBox x:Name="Mo2Panel" Header="Mod Organizer 2 settings">
+                <Grid Margin="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="MO2 instance folder:"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" x:Name="Mo2InstancePathBox" TextChanged="Mo2InstancePathBox_TextChanged"/>
+                    <Button Grid.Row="0" Grid.Column="2" Content="Browse..." Click="Mo2BrowseInstance_Click"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Profile:"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1" x:Name="Mo2ProfileCombo"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="(auto-listed from instance)" Foreground="Gray" FontSize="11"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Game Data folder:"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" x:Name="Mo2GameDataPathBox"/>
+                    <Button Grid.Row="2" Grid.Column="2" Content="Browse..." Click="Mo2BrowseGameData_Click"/>
+
+                    <Expander Grid.Row="3" Grid.ColumnSpan="3" Header="Advanced: explicit profile file paths" Margin="0,6,0,0">
+                        <Grid Margin="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="plugins.txt:"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="Mo2PluginsTxtBox"/>
+                            <Button Grid.Row="0" Grid.Column="2" Content="Browse..." Click="Mo2BrowsePluginsTxt_Click"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="loadorder.txt:"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="Mo2LoadOrderTxtBox"/>
+                            <Button Grid.Row="1" Grid.Column="2" Content="Browse..." Click="Mo2BrowseLoadOrderTxt_Click"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="modlist.txt:"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" x:Name="Mo2ModlistTxtBox"/>
+                            <Button Grid.Row="2" Grid.Column="2" Content="Browse..." Click="Mo2BrowseModlistTxt_Click"/>
+                        </Grid>
+                    </Expander>
+                </Grid>
+            </GroupBox>
+
+            <!-- Vortex panel -->
+            <GroupBox x:Name="VortexPanel" Header="Vortex settings" Visibility="Collapsed">
+                <StackPanel Margin="6">
+                    <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,0,0,8">
+                        Vortex's default deployment method links mods directly into your game's
+                        Data folder, so this is normally the same as your game's own Data path.
+                        If you use a non-default deployment method (symlinks elsewhere, a
+                        separate staging-only mode), point this at wherever Vortex actually
+                        deploys files for this game instead.
+                    </TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Game Data folder:"/>
+                        <TextBox Grid.Column="1" x:Name="VortexGameDataPathBox" TextChanged="ModeDataPathBox_TextChanged"/>
+                        <Button Grid.Column="2" Content="Browse..." Click="VortexBrowseGameData_Click"/>
+                    </Grid>
+                    <Button Content="Auto-detect from Vortex" HorizontalAlignment="Left" Click="VortexAutoDetect_Click"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Direct panel -->
+            <GroupBox x:Name="DirectPanel" Header="Direct game path" Visibility="Collapsed">
+                <Grid Margin="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Game Data folder:"/>
+                    <TextBox Grid.Column="1" x:Name="DirectGameDataPathBox" TextChanged="ModeDataPathBox_TextChanged"/>
+                    <Button Grid.Column="2" Content="Browse..." Click="DirectBrowseGameData_Click"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- Output -->
+        <GroupBox Grid.Row="3" Header="Output" Margin="0,0,0,10">
+            <StackPanel Margin="6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Output folder:"/>
+                    <TextBox Grid.Column="1" x:Name="OutputFolderBox" TextChanged="OutputFolderBox_TextChanged"/>
+                    <Button Grid.Column="2" Content="Browse..." Click="OutputBrowse_Click"/>
+                </Grid>
+                <TextBlock x:Name="OutputHintText" Foreground="Gray" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Run row -->
+        <StackPanel Grid.Row="4" Margin="0,0,0,10">
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Threshold (units):"/>
+                <TextBox Grid.Column="1" x:Name="ThresholdBox" Text="96"
+                         ToolTip="How far a reference's Z can sit from the terrain directly beneath it before it's flagged. Default 96 - well above ordinary half-buried-rock authoring, well below a real bug."/>
+                <TextBlock Grid.Column="3" Text="Worldspace filter:"/>
+                <TextBox Grid.Column="4" x:Name="WorldspaceFilterBox" Text="Tamriel"
+                         ToolTip="Restrict detection to one worldspace's EditorID (case-insensitive). Strongly recommended - large custom worldspaces (Arnima, Wyrmstooth, Vigilant, ...) are heavily rock/cliff-decorated and dominate the flagged set with false positives otherwise. Leave blank to check every worldspace."/>
+            </Grid>
+            <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,0,0,6">
+                How far a reference can sit from the terrain beneath it before it's flagged as floating/sunk. Raise it if ordinary half-buried rocks are showing up as false positives; lower it to catch smaller floats too.
+            </TextBlock>
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Water submerge depth (units):"/>
+                <TextBox Grid.Column="1" x:Name="WaterDepthBox" Text="48"
+                         ToolTip="How far BELOW a cell's water surface a fallback-corrected Debris/Log/Driftwood reference gets placed (Fix mode only - has no effect on plain Detection). Default 48. Raise it for a deeper creek bed, lower it for a shallow one - a single flat per-cell water height can't match every scene, so this is a per-run setting rather than a fixed constant."/>
+            </Grid>
+            <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,0,0,6">
+                Only affects driftwood/log/debris-type objects that a fix run decides belong in the water - how far below the water's surface they get placed. Not a general setting; has no effect on anything resting on dry land.
+            </TextBlock>
+            <CheckBox x:Name="ForceCorrectCheck" Content="⚠ Force-correct capped items (RISKY - WILL move/bury legitimately-placed objects, not just decorative clutter)" Margin="0,0,0,6"
+                      ToolTip="Bypasses every auto-fix delta cap (150/600/1000 units) and corrects EVERY flagged floating reference, not just the ones this tool can confirm a safe target for. CONFIRMED 2026-09-14 to bury real, load-bearing/context-important placed objects, not just decorative clutter - a vanilla rock (RockL05) near a custom dungeon entrance got shoved underground, visibly breaking the scene. Off by default for this reason. This is the exact pre-cap behavior from 2026-09-12 that first pushed objects underground - it visibly moves more things, but some corrections WILL be wrong instead of just left floating, and turning this checkbox back off does NOT undo damage already done in a previous run (sunk/buried items are never auto-corrected in either mode) - a full reset (disable+delete the old esp, regenerate, restart) is the only way back. Only enable for a deliberate, reviewed pass, and check the result carefully before trusting it in-game."/>
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox x:Name="CustomSafetyCapCheck" Grid.Column="0" Content="⚠ Custom heightmap-only safety threshold:" VerticalAlignment="Center"
+                          Checked="CustomSafetyCapCheck_Toggled" Unchecked="CustomSafetyCapCheck_Toggled"
+                          ToolTip="A MIDDLE GROUND between the safe 150-unit default and full Force-correct: raises (or lowers) just the heightmap-only-guess tier's cap, so items in the widened range get auto-corrected while the collision-confirmed and water-fallback tiers' own caps stay untouched. Still risky above the default - a heightmap-only target is a GUESS at the real surface, not a measured one, and a wrong guess CAN place an object below the visible ground, same risk class as Force-correct, just narrower in scope. Leave unchecked to use the safe 150-unit default."/>
+                <TextBox x:Name="CustomSafetyCapBox" Grid.Column="2" Text="150" IsEnabled="False" Margin="8,3,4,3"/>
+                <TextBlock Grid.Column="3" Text="units (default 150)" Foreground="Gray" FontSize="11" VerticalAlignment="Center"/>
+            </Grid>
+            <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,0,0,6">
+                Terrain-only detection: compares each tree/rock/movable-static's position against the interpolated landscape height beneath it, and only where that exact spot's terrain actually differs from vanilla Skyrim.esm (i.e. a mod's landscape edit could plausibly have stranded it). Does not know about rock/cliff mesh collision, so review the report before running the fix, especially outside the 96-500 unit range.
+            </TextBlock>
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="RunButton" Content="Run Detection" Padding="20,6" FontWeight="Bold" Click="RunButton_Click"/>
+                <Button x:Name="FixButton" Content="Generate Fix Plugin" Padding="20,6" Margin="8,3,0,3" Click="FixButton_Click"
+                        ToolTip="Corrects every flagged reference's Position.Z (only Z - never X/Y, rotation, or scale) to match the terrain beneath it. Always writes a new patch; nothing else is touched. Does not require Run Detection first."/>
+                <ProgressBar x:Name="RunProgress" Width="200" Height="20" Margin="12,0,0,0" IsIndeterminate="True" Visibility="Collapsed" VerticalAlignment="Center"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Log -->
+        <GroupBox Grid.Row="5" Header="Log">
+            <TextBox x:Name="LogBox" IsReadOnly="True" TextWrapping="NoWrap"
+                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas" FontSize="12" Background="#FF1E1E1E" Foreground="#FFDCDCDC"
+                     BorderThickness="0"/>
+        </GroupBox>
+
+        <!-- Result bar -->
+        <Grid Grid.Row="6" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" x:Name="ResultText" Text="" FontWeight="Bold" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" x:Name="OpenReportButton" Content="Open Report" IsEnabled="False" Click="OpenReportButton_Click" Margin="0,0,8,0"/>
+            <Button Grid.Column="2" x:Name="OpenFixPluginButton" Content="Open Fix Plugin" IsEnabled="False" Click="OpenFixPluginButton_Click" Margin="0,0,8,0"/>
+            <Button Grid.Column="3" x:Name="OpenFolderButton" Content="Open Folder" IsEnabled="False" Click="OpenFolderButton_Click"/>
+        </Grid>
+    </Grid>
+</Window>

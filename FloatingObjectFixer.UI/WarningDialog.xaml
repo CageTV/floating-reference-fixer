@@ -1,0 +1,15 @@
+<Window x:Class="FloatingObjectFixer.UI.WarningDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Warning" Width="520" SizeToContent="Height" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" Background="#FF2D2D30">
+    <StackPanel Margin="20">
+        <TextBlock Text="⚠ WARNING" FontSize="28" FontWeight="Bold" Foreground="#FFFFC800"
+                   HorizontalAlignment="Center" Margin="0,0,0,14"/>
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap" Foreground="#FFDCDCDC" FontSize="13" Margin="0,0,0,18"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button x:Name="NoButton" Content="Cancel" Width="100" Padding="8,6" Margin="0,0,10,0" IsCancel="True" Click="NoButton_Click"/>
+            <Button x:Name="YesButton" Content="Continue Anyway" Width="140" Padding="8,6" Background="#FF5A1F1F" Foreground="White" FontWeight="Bold" Click="YesButton_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

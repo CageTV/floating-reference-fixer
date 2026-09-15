@@ -449,6 +449,10 @@ public static class FloatingObjectFixer
 
         Directory.CreateDirectory(outputDirectory);
         var outputPath = Path.Combine(outputDirectory, outputPluginName);
+
+        var eslResult = EslEligibility.CheckAndFlag(patchMod);
+        log(eslResult.Summary);
+
         log($"Writing patch plugin to {outputPath} ...");
         SkyrimMod.WriteBuilder(SkyrimRelease.SkyrimSE)
             .ToPath(outputPath, fileSystem: null)

@@ -1,5 +1,12 @@
 # Floating Object Fixer — Changelog
 
+## v2.0.3 — 2026-09-15
+
+**New: automatic ESL flagging.** The generated fix plugin is now checked for ESL eligibility every run
+(same logic as SSEEdit's own "Find ESP plugins which could be turned into ESL" script) and automatically
+flagged as an ESL if it qualifies — this tool's output only ever overrides existing references, so it's
+eligible essentially every time. The log reports whether the flag was set and why.
+
 ## v2.0.2 — 2026-09-14
 
 **Collision-awareness now works out of the box — no manual setup at all.** Real user feedback after

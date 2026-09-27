@@ -1,5 +1,14 @@
 # Floating Object Fixer — Changelog
 
+## v2.0.4 — 2026-09-27
+
+- **Fixed: VHGT `Offset` scaling** (reported on the sibling Landscape Seam Fixer:
+  [#2](https://github.com/CageTV/landscape-seam-fixer/issues/2)). The heightmap offset uses the same
+  8-unit step as the per-vertex deltas; reading it unscaled gave wrong absolute terrain heights - and this
+  tool compares object positions against those heights, so it could misjudge how far an object floats.
+- The app now uses the tool family's shared icon.
+- Command-line and UI versions aligned at 2.0.4.
+
 ## v2.0.3 — 2026-09-15
 
 **New: automatic ESL flagging.** The generated fix plugin is now checked for ESL eligibility every run

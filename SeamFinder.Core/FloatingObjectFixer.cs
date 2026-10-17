@@ -72,7 +72,7 @@ public record FloatingCandidate(
 
 public record FloatingObjectReportResult(List<string> ReportCsvLines, int CandidatesChecked, int Flagged);
 
-public record FloatingObjectFixResult(int RefsCorrected, string OutputPath);
+public record FloatingObjectFixResult(int RefsCorrected, string OutputPath, IReadOnlyList<string>? AllOutputPaths = null);
 
 public static class FloatingObjectFixer
 {
@@ -454,15 +454,10 @@ public static class FloatingObjectFixer
         log(eslResult.Summary);
 
         log($"Writing patch plugin to {outputPath} ...");
-        SkyrimMod.WriteBuilder(SkyrimRelease.SkyrimSE)
-            .ToPath(outputPath, fileSystem: null)
-            .WithNoLoadOrder()
-            .WithDataFolder(dataFolderForWrite)
-            .WithAllParentMasters()
-            .Write(patchMod);
+        var writtenPlugins = PluginSplitWriter.Write(patchMod, outputPath, dataFolderForWrite, log);
 
         log($"Corrected {corrected} floating reference(s); left {leftSunk} sunk/buried and {leftTooLargeToAutoFix} over the auto-fix delta cap untouched, out of {candidates.Count} flagged total.");
-        return new FloatingObjectFixResult(corrected, outputPath);
+        return new FloatingObjectFixResult(corrected, outputPath, writtenPlugins);
     }
 
     static List<FloatingCandidate> FindCandidates(

@@ -1,6 +1,6 @@
 # Floating Object Fixer
 
-**Current version: 2.0.5** — see [CHANGELOG.md](CHANGELOG.md) for what's new.
+**Current version: 2.0.6** — see [CHANGELOG.md](CHANGELOG.md) for what's new.
 
 A standalone tool for Skyrim Special Edition / Anniversary Edition that finds
 placed trees, rocks, and movable statics whose position no longer matches the

@@ -31,6 +31,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // Never open bigger than the usable screen (1080p at 125-150% scaling has well under 1000 DIPs of height).
+        Height = System.Math.Min(Height, System.Windows.SystemParameters.WorkArea.Height - 16);
+        Width = System.Math.Min(Width, System.Windows.SystemParameters.WorkArea.Width - 16);
         LoadPersistedSettings();
         RefreshOutputFolderDefault();
     }
@@ -523,6 +526,8 @@ public partial class MainWindow : Window
             _lastFixPluginPath = result.OutputPath;
             _lastOutputFolder = outputFolder;
             ResultText.Text = $"Corrected {result.RefsCorrected} reference(s). Test in-game before relying on this - see the log above for details.";
+            if (result.AllOutputPaths is { Count: > 1 } splitFiles)
+                ResultText.Text += $" SPLIT into {splitFiles.Count} plugins ({string.Join(", ", splitFiles.Select(System.IO.Path.GetFileName))}) - enable ALL of them, next to each other in the load order.";
             OpenFixPluginButton.IsEnabled = true;
             OpenFolderButton.IsEnabled = true;
         }

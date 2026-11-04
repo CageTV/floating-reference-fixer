@@ -125,7 +125,7 @@ public partial class MainWindow : Window
     }
 
     // Writes the exact settings a run used into that run's own output
-    // folder too (alongside log.txt/esp/csv), separate from the
+    // folder too (alongside FloatingObjectFixer-log.txt/esp/csv), separate from the
     // always-on-launch copy above - a record of what config produced this
     // particular output, portable with it if the folder is shared/moved.
     void SaveSettingsSnapshotToOutputFolder(RunSettings s, string outputFolder)
@@ -140,7 +140,7 @@ public partial class MainWindow : Window
                 s.VortexGameDataPath, s.DirectGameDataPath, s.ThresholdUnits, s.WorldspaceFilter,
                 s.WaterSubmergeMarginUnits, s.ForceCorrectCappedItems, s.HeightmapOnlyCapUnits, s.UsesCustomSafetyCap,
             };
-            File.WriteAllText(Path.Combine(outputFolder, "settings-used.json"),
+            File.WriteAllText(Path.Combine(outputFolder, "FloatingObjectFixer-settings-used.json"),
                 System.Text.Json.JsonSerializer.Serialize(snapshot, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         }
         catch
@@ -157,7 +157,7 @@ public partial class MainWindow : Window
         try
         {
             Directory.CreateDirectory(outputFolder);
-            _currentLogFilePath = Path.Combine(outputFolder, "log.txt");
+            _currentLogFilePath = Path.Combine(outputFolder, "FloatingObjectFixer-log.txt");
             File.WriteAllText(_currentLogFilePath, "");
         }
         catch
